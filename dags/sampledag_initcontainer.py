@@ -38,7 +38,6 @@ environment_sources = [
 environment_variables = [k8s.V1EnvVar(name="SAMPLE_ENV", value="SAMPLE")]
 
 # Informações de volume compartilhado para o container de inicialização do Git
-# Ainda tem alguma coisa errada, o Kubernetes reclama de não conseguir criar os volumes
 git_empty_dir=k8s.V1EmptyDirVolumeSource()
 
 git_volume = k8s.V1Volume(
@@ -61,6 +60,7 @@ init_container = k8s.V1Container(
     name="init-container",
     image="k8s.gcr.io/git-sync:v3.1.6",
     volume_mounts=init_container_volume_mounts,
+    # TODO: Escolher args adequados
     args=[
         "--ssh",
         "--repo=git@github.com:target/repo.git",
@@ -87,7 +87,9 @@ with DAG(
         name="sample_pod",
         namespace='default',
         task_id="sample_pod",
-        volumes=[ssh_private_key_volume],
+        # Aqui é a lista de todos os volumes do Pod
+        volumes=[ssh_private_key_volume, git_volume],
+        # Aqui é a lista só de volume mounts desse container
         volume_mounts=[git_volume_mount],
         init_containers=[init_container]
         env_from=environment_sources,
